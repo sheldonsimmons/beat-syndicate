@@ -224,19 +224,30 @@
                     };
                     
                     // Auto-detect file type and assign
-                    if (file.name.toLowerCase().includes('preview') || 
-                        (ext === 'mp3' && !newBeat.previewFile && !newBeat.mp3File)) {
+                    // If no preview yet, ANY audio file becomes the preview
+                    if (!newBeat.previewFile && (ext === 'mp3' || ext === 'wav' || ext === 'm4a' || ext === 'aac')) {
                         setNewBeat(prev => ({ ...prev, previewFile: file }));
-                        fileInfo.assignedTo = 'Preview';
-                    } else if (ext === 'mp3') {
+                        fileInfo.assignedTo = 'Preview (playable)';
+                    } else if (ext === 'mp3' && newBeat.previewFile) {
                         setNewBeat(prev => ({ ...prev, mp3File: file }));
                         fileInfo.assignedTo = 'Full MP3';
-                    } else if (ext === 'wav') {
+                    } else if (ext === 'wav' && newBeat.previewFile) {
                         setNewBeat(prev => ({ ...prev, wavFile: file }));
-                        fileInfo.assignedTo = 'WAV';
+                        fileInfo.assignedTo = 'WAV (Premium)';
                     } else if (ext === 'zip') {
                         setNewBeat(prev => ({ ...prev, stemsFile: file }));
                         fileInfo.assignedTo = 'Stems';
+                    } else {
+                        // If it's audio but we already have preview, make it the full version
+                        if (ext === 'mp3' || ext === 'wav') {
+                            if (!newBeat.wavFile && ext === 'wav') {
+                                setNewBeat(prev => ({ ...prev, wavFile: file }));
+                                fileInfo.assignedTo = 'WAV (Premium)';
+                            } else if (!newBeat.mp3File && ext === 'mp3') {
+                                setNewBeat(prev => ({ ...prev, mp3File: file }));
+                                fileInfo.assignedTo = 'Full MP3';
+                            }
+                        }
                     }
                     
                     newFiles.push(fileInfo);
@@ -292,7 +303,7 @@
                 }
                 
                 if (!editingBeat && !newBeat.previewFile) {
-                    alert('❌ Please upload at least a Preview MP3 file\n\nYou can add WAV and ZIP files after uploading.');
+                    alert('❌ Please upload at least one audio file (MP3 or WAV)\n\nThis will be used as the playable preview.');
                     return;
                 }
 
@@ -841,9 +852,9 @@
                                         {!editingBeat && (
                                             <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-3 mb-3">
                                                 <p className="text-sm text-blue-200">
-                                                    <span className="font-semibold">Required:</span> Title + Preview MP3
+                                                    <span className="font-semibold">Required:</span> Title + Any audio file (MP3/WAV)
                                                     <br />
-                                                    <span className="text-xs">You can add WAV and ZIP files now or edit later</span>
+                                                    <span className="text-xs">First audio file = playable preview. Add more files or edit later!</span>
                                                 </p>
                                             </div>
                                         )}
@@ -906,12 +917,12 @@
 
                                         {/* File Type Guide */}
                                         <div className="mt-4 bg-gray-800 rounded-lg p-4">
-                                            <p className="text-xs font-semibold text-gray-300 mb-2">📁 File Guide:</p>
-                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
-                                                <div>• <span className="text-yellow-400">Preview MP3</span> - Required, for playback</div>
-                                                <div>• <span className="text-blue-400">Full MP3</span> - Optional, tagged version</div>
-                                                <div>• <span className="text-green-400">WAV</span> - Optional, for Premium license</div>
-                                                <div>• <span className="text-purple-400">ZIP</span> - Optional, stems for Exclusive</div>
+                                            <p className="text-xs font-semibold text-gray-300 mb-2">💡 How it works:</p>
+                                            <div className="space-y-1 text-xs text-gray-400">
+                                                <div>• <span className="text-yellow-400">First audio file</span> = Playable preview (MP3 or WAV)</div>
+                                                <div>• <span className="text-blue-400">Additional MP3/WAV</span> = Download versions for customers</div>
+                                                <div>• <span className="text-purple-400">ZIP file</span> = Stems for exclusive license</div>
+                                                <div className="pt-2 text-green-400">✓ Upload just 1 file or all at once - your choice!</div>
                                             </div>
                                         </div>
                                     </div>
