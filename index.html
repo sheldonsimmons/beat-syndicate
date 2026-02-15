@@ -287,12 +287,12 @@
 
             const saveBeat = async () => {
                 if (!newBeat.title) {
-                    alert('Please provide a title');
+                    alert('❌ Please provide a beat title');
                     return;
                 }
                 
                 if (!editingBeat && !newBeat.previewFile) {
-                    alert('Please provide a preview file');
+                    alert('❌ Please upload at least a Preview MP3 file\n\nYou can add WAV and ZIP files after uploading.');
                     return;
                 }
 
@@ -837,7 +837,18 @@
                                     {/* File Upload - Single Drag and Drop Area */}
                                     <div>
                                         <label className="block text-sm font-semibold mb-2">Upload Files</label>
-                                        <p className="text-xs text-gray-400 mb-2">Drop all your files here - MP3, WAV, ZIP (Preview MP3 required)</p>
+                                        
+                                        {!editingBeat && (
+                                            <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-3 mb-3">
+                                                <p className="text-sm text-blue-200">
+                                                    <span className="font-semibold">Required:</span> Title + Preview MP3
+                                                    <br />
+                                                    <span className="text-xs">You can add WAV and ZIP files now or edit later</span>
+                                                </p>
+                                            </div>
+                                        )}
+                                        
+                                        <p className="text-xs text-gray-400 mb-2">Drop all your files here - MP3, WAV, ZIP</p>
                                         
                                         <div
                                             onDrop={handleDrop}
