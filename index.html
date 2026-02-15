@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         body {
             margin: 0;
@@ -31,6 +32,10 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZ2Z6bmd0d2F1am11Y3R1YnJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDUwODQsImV4cCI6MjA4NjY4MTA4NH0.zHPND9_MraDwlGJQpla2TvwRlKTDjilU8DIM0ao1mJc';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Stripe
+        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51KTx2OGUY0Zua5gvrn3Gkfq4ZuGIL9UJF774yssnwwqMnKytVEpUAzniiVVcEt73zPzI4lwHMPH1mhdY7gEWZoCF00RAKtR2OX';
+        const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
 
         // Icons components
         const ShoppingCart = ({ size = 24 }) => (
@@ -448,6 +453,48 @@
 
             const removeFromCart = (cartId) => {
                 setCart(cart.filter(item => item.cartId !== cartId));
+            };
+
+            const handleCheckout = async () => {
+                if (cart.length === 0) {
+                    alert('Your cart is empty!');
+                    return;
+                }
+
+                const customerEmail = prompt('Enter your email to receive your beats:');
+                if (!customerEmail || !customerEmail.includes('@')) {
+                    alert('Please enter a valid email address');
+                    return;
+                }
+
+                try {
+                    // Call Netlify function to create checkout session
+                    const response = await fetch('/.netlify/functions/create-checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            items: cart,
+                            customerEmail: customerEmail
+                        })
+                    });
+
+                    const { sessionId, error } = await response.json();
+
+                    if (error) {
+                        alert('Error: ' + error);
+                        return;
+                    }
+
+                    // Redirect to Stripe Checkout
+                    const result = await stripe.redirectToCheckout({ sessionId });
+
+                    if (result.error) {
+                        alert(result.error.message);
+                    }
+                } catch (error) {
+                    console.error('Checkout error:', error);
+                    alert('Error processing checkout. Please try again.');
+                }
             };
 
             const togglePlay = async (beat) => {
@@ -1001,8 +1048,11 @@
                                     <span className="font-bold">Total:</span>
                                     <span className="text-2xl font-bold text-yellow-400">${cartTotal.toLocaleString()}</span>
                                 </div>
-                                <button className="w-full bg-yellow-400 text-black py-3 rounded-lg font-bold hover:bg-yellow-300 transition">
-                                    Checkout
+                                <button 
+                                    onClick={handleCheckout}
+                                    className="w-full bg-yellow-400 text-black py-3 rounded-lg font-bold hover:bg-yellow-300 transition"
+                                >
+                                    Checkout with Stripe
                                 </button>
                             </div>
                         </div>
